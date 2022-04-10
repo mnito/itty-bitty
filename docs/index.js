@@ -18,6 +18,9 @@
     document.getElementById("favicon").href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><text y=".9em">'+ favicon + '</text></svg>'
   }
 
+  window.VERIFICATION_KEY = "37112db1eff6975eaa315bf0b4ceb2ce9a95c6cd82254e8c2b4142a7bea629caf727881ffd3a5a95dca2a872d22806e486f4b97f8f550d5300";
+  window.ALLOW_UNVERIFIED_SITES = window.VERIFICATION_KEY == null;
+
   window.el = function (tagName, attrs, ...children) {
     let l = document.createElement(tagName);
     Object.entries(attrs).forEach(([k,v]) => l[k] = v);
@@ -124,7 +127,13 @@
 
       var compressed = true;
       dataPrefix = HEAD_TAGS_EXTENDED;
-      let encoding = !compressed ? "base64," : (fragment.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER);
+
+      let encoding = "base64,";
+      if (fragment.startsWith("ey") && fragment.includes('.')) {
+        encoding = bitty.SIGNED_MARKER;
+      } else if (compressed) {
+        encoding = fragment.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER;
+      }
       fragment = "data:text/html;charset=utf-8;" + encoding + "," + fragment;
     }
 

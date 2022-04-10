@@ -1,5 +1,5 @@
 const dataUrlRE =
-/^data:(?<mediatype>(?<type>[a-z]+)\/(?<subtype>[a-z+]+))?(?<params>(?:;[^;,]+=[^;,]+)*)?(?:;(?<encoding>\w+64))?,(?<data>.*)$/
+/^data:(?<mediatype>(?<type>[a-z]+)\/(?<subtype>[a-z+]+))?(?<params>(?:;[^;,]+=[^;,]+)*)?(?:;(?<encoding>\w+64|signed))?,(?<data>.*)$/
 ///^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
 
 // dataurl    := "data:" [ mediatype ] [ ";base64" ] "," data
@@ -28,6 +28,7 @@ var BASE64_MARKER = 'base64';
 var LZMA64_MARKER = 'bxze64';
 var GZIP64_MARKER = 'gzip64';
 var BROT64_MARKER = 'brot64';
+var SIGNED_MARKER = 'signed';
 
 function compressDataURL(dataURL, callback) {
   var base64Index = dataURL.indexOf(BASE64_MARKER);
@@ -47,7 +48,41 @@ function base64ToByteArray(base64) {
   return array;
 }
 
+function decrypt(cipher, base64) {
+  let pass = prompt("Passphrase?");
+  let decrypted = CryptoJS[cipher.toUpperCase()].decrypt(base64, pass);
+  base64 = CryptoJS.enc.Base64.stringify(decrypted);
+  return base64;
+}
 
+function decompressVerifiedSite(verificationKey, token, preamble, callback) {
+  console.debug(`Site token provided: ${token}`);
+
+  const {verified, decoded: site, reason}  = Thirds.jwtDecode(token, "EdDSA", {public: true, key: verificationKey});
+  if (!verified) {
+    console.error(`Failed to verify site. Reason: ${reason}`);
+    callback();
+    return;
+  }
+
+  console.info("Site verified.");
+  console.debug(`Site base64 content: ${site.base64Content}`);
+
+  let base64 = site.base64Content;
+  if (site.info.params?.cipher) {
+    // TODO(miken) Error handling
+    base64 = decrypt(cipher, base64);
+  }
+
+  let bytes = base64ToByteArray(base64 || "");
+  decompressString(bytes, site.info.encoding, function(string) {
+    stringToData(string, function(data) {
+      if (!data) return callback();
+      const dataURL = "data:text/html;charset=utf-8;" + BASE64_MARKER + "," + (preamble || '') + data.split(',')[1];
+      callback(dataURL, string);
+    });
+  });
+}
 
 function decompressDataURL(dataURL, preamble, callback) {
   let info = infoForDataURL(dataURL);
@@ -55,15 +90,30 @@ function decompressDataURL(dataURL, preamble, callback) {
   let encoding = info.encoding;
   let encodingIndex = dataURL.indexOf(encoding);
 
+  if (encoding === SIGNED_MARKER) {
+    if (!window.VERIFICATION_KEY) {
+      console.error("No verification key to check verified site")
+      callback();
+      return;
+    }
+
+    decompressVerifiedSite(window.VERIFICATION_KEY, dataURL.split(',').pop(), preamble, callback);
+    return;
+  }
+
+  if (!window.ALLOW_UNVERIFIED_SITES) {
+    console.warn("Unverified sites are not allowed");
+    callback();
+    return;
+  }
+
   if (encoding) {
     var base64 = dataURL.substring(encodingIndex + LZMA64_MARKER.length + 1);
     base64 = base64.replace("-",""); // TODO: apply this elsewhere;
 
     let cipher;
     if (cipher = info.params?.cipher) {
-      let pass = prompt("Passphrase?");
-      let decrypted = CryptoJS[cipher.toUpperCase()].decrypt(base64, pass);
-      base64 = CryptoJS.enc.Base64.stringify(decrypted)
+      base64 = decrypt(cipher, base64);
     }
 
     let bytes = base64ToByteArray(base64);
@@ -165,4 +215,5 @@ export {
   LZMA64_MARKER,
   GZIP64_MARKER,
   BROT64_MARKER,
+  SIGNED_MARKER,
 };

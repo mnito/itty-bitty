@@ -35,3 +35,6 @@ exports.index = functions.https.onRequest((request, response) => {
   }
 
 });
+
+const hostExports = require('./host');
+exports.checkout = hostExports.checkout;

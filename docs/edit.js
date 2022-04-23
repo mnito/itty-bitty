@@ -305,3 +305,10 @@ function tweetLink() {
   window.open(url, "_blank");
   return false;
 }
+
+window.addEventListener("load", () => {
+  document.getElementById('hostForm').addEventListener('submit', () => {
+    const site = window.location.hash.substring(2);
+    document.getElementById('site').value = site;
+  });
+});

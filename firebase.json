@@ -18,6 +18,10 @@
       {
         "source": "/**/",
         "function": "index"
+      },
+      {
+        "source": "/checkout",
+        "function": "checkout"
       }
     ]
   }

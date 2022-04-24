@@ -131,6 +131,9 @@
       let encoding = "base64,";
       if (fragment.startsWith("ey") && fragment.includes('.')) {
         encoding = bitty.SIGNED_MARKER;
+        // Decode JWT payload without verifying to get media type
+        const mediaType = JSON.parse(window.atob(fragment.split('.')[1])).info.mediaType;
+        dataPrefix = mediaType == 'text/html' ? HEAD_TAGS: HEAD_TAGS_EXTENDED;
       } else if (compressed) {
         encoding = fragment.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER;
       }

@@ -66,15 +66,25 @@ function decompressVerifiedSite(verificationKey, token, preamble, callback) {
   }
 
   console.info("Site verified.");
-  console.debug(`Site base64 content: ${site.base64Content}`);
 
-  let base64 = site.base64Content;
-  if (site.info.params?.cipher) {
-    // TODO(miken) Error handling
-    base64 = decrypt(cipher, base64);
+  if (site.title) {
+    const fragment = window.location.hash.substring(1);
+    const titleInUrl = decodeURIComponent(window.location.hash.substring(1, fragment.indexOf('/') + 1).replaceAll('_', ' '));
+    if (titleInUrl !== site.title) {
+      console.error('Site title does not match title in URL: refusing to render');
+      callback();
+      return;
+    }
+    document.title = site.title;
   }
 
-  let bytes = base64ToByteArray(base64 || "");
+  let content = site.content;
+  if (site.info.params?.cipher) {
+    // TODO(miken) Error handling
+    content = decrypt(cipher, content);
+  }
+
+  let bytes = base64ToByteArray(content || "");
   decompressString(bytes, site.info.encoding, function(string) {
     stringToData(string, function(data) {
       if (!data) return callback();

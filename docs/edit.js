@@ -308,7 +308,30 @@ function tweetLink() {
 
 window.addEventListener("load", () => {
   document.getElementById('hostForm').addEventListener('submit', () => {
-    const site = window.location.hash.substring(2);
-    document.getElementById('site').value = site;
+    let fragment = window.location.hash.substring(1);
+
+    const title = fragment.substring(0, fragment.indexOf('/'));
+    if (title) {
+      document.getElementById('siteTitle').value = decodeURIComponent(title.replaceAll('_', ' '));
+    }
+
+    const dataFragment = fragment.substring(fragment.indexOf('/') + 1);
+
+    let dataUrl;
+    if (!dataFragment.startsWith('data:')) {
+      const data = dataFragment.substring(dataFragment.indexOf('?') + 1);
+      const encoding = data.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER;
+
+      const checkData = data.trim().toLowerCase();
+      const mediaType = (
+        (checkData.startsWith('<!DOCTYPE html>') || checkData.startsWith('<html>'))
+        && checkData.endsWith('</html>')
+      ) ? 'text/html' : 'text/plain';
+      dataUrl = "data:" + mediaType + ";charset=utf-8;" + encoding + "," + data;
+    } else {
+      dataUrl = dataFragment;
+    }
+
+    document.getElementById('siteDataUrl').value = dataUrl;
   });
 });

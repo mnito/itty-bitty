@@ -129,10 +129,10 @@
       dataPrefix = HEAD_TAGS_EXTENDED;
 
       let encoding = "base64,";
-      if (fragment.startsWith("ey") && fragment.includes('.')) {
+      if (fragment.startsWith("ey") && (fragment.includes('.') || fragment.includes('%2E'))) {
         encoding = bitty.SIGNED_MARKER;
         // Decode JWT payload without verifying to get media type
-        const mediaType = JSON.parse(window.atob(fragment.split('.')[1])).info.mediaType;
+        const mediaType = JSON.parse(window.atob(fragment.split(fragment.includes('.') ? '.' : '%2E')[1])).info.mediaType;
         dataPrefix = mediaType == 'text/html' ? HEAD_TAGS: HEAD_TAGS_EXTENDED;
       } else if (compressed) {
         encoding = fragment.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER;

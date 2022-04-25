@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const functions = require('firebase-functions');
 const Thirds = require('./thirds.min.node.js');
 
@@ -43,7 +44,8 @@ exports.checkout = functions.runWith(
         encoding: encoding,
         mediaType: splitDataUrl[0].replace('data:', '')
       },
-      ...(req.body.siteTitle ? {title: req.body.siteTitle} : {})
+      ...(req.body.siteTitle ? {title: req.body.siteTitle} : {}),
+      nonce: crypto.randomBytes(8).toString('base64')
     },
     'EdDSA',
     {key: process.env.VERIFICATION_SECRET}

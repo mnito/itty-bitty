@@ -107,7 +107,9 @@ function decompressDataURL(dataURL, preamble, callback) {
       return;
     }
 
-    decompressVerifiedSite(window.VERIFICATION_KEY, dataURL.split(',').pop(), preamble, callback);
+    // JWT may have pluses in it (that can be ignored) to work around an iMessage link parsing issue
+    const token =  dataURL.split(',').pop().replaceAll('+', '');
+    decompressVerifiedSite(window.VERIFICATION_KEY, token, preamble, callback);
     return;
   }
 

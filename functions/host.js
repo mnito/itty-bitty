@@ -52,7 +52,9 @@ exports.checkout = functions.runWith(
   );
 
   const encodedTitle = encodeURIComponent((req.body.siteTitle || '').replaceAll(' ', '_'));
-  const site = `${process.env.ITTY_BITTY_BASE_URL}/#${encodedTitle}/?${token}`;
+  // Insert pluses in path every 100 characters to work around an iMessage link parsing issue
+  const path = token.replace(/(.{100})/g, '$1+');
+  const site = `${process.env.ITTY_BITTY_BASE_URL}/#${encodedTitle}/?${path}`;
   functions.logger.debug('Generated site: ', site);
 
   const session = await stripe.checkout.sessions.create({

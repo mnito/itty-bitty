@@ -132,7 +132,8 @@
       if (fragment.startsWith("ey") && fragment.includes('.')) {
         encoding = bitty.SIGNED_MARKER;
         // Decode JWT payload without verifying to get media type
-        const mediaType = JSON.parse(window.atob(fragment.split('.')[1])).info.mediaType;
+        // JWT may have pluses in it (that can be ignored) to work around an iMessage link parsing issue
+        const mediaType = JSON.parse(window.atob(fragment.split('.')[1].replaceAll('+', ''))).info.mediaType;
         dataPrefix = mediaType == 'text/html' ? HEAD_TAGS: HEAD_TAGS_EXTENDED;
       } else if (compressed) {
         encoding = fragment.startsWith("XQA") ? bitty.LZMA64_MARKER : bitty.GZIP64_MARKER;

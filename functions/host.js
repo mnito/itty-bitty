@@ -52,7 +52,7 @@ exports.checkout = functions.runWith(
   );
 
   const encodedTitle = encodeURIComponent((req.body.siteTitle || '').replaceAll(' ', '_'));
-  const site = `${process.env.ITTY_BITTY_BASE_URL}/#${encodedTitle}/?${token.replaceAll('.', '-')}`;
+  const site = `${process.env.ITTY_BITTY_BASE_URL}/#${encodedTitle}/?${token}`;
   functions.logger.debug('Generated site: ', site);
 
   const session = await stripe.checkout.sessions.create({

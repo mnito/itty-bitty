@@ -107,8 +107,7 @@ function decompressDataURL(dataURL, preamble, callback) {
       return;
     }
 
-    const token = dataURL.split(',').pop().replaceAll('-', '.');
-    decompressVerifiedSite(window.VERIFICATION_KEY, token, preamble, callback);
+    decompressVerifiedSite(window.VERIFICATION_KEY, dataURL.split(',').pop(), preamble, callback);
     return;
   }
 

@@ -51,6 +51,10 @@ exports.checkout = functions.runWith(
     {key: process.env.VERIFICATION_SECRET}
   );
 
+  const encodedTitle = encodeURIComponent((req.body.siteTitle || '').replaceAll(' ', '_'));
+  const site = `${process.env.ITTY_BITTY_BASE_URL}/#${encodedTitle}/?${token}`;
+  functions.logger.debug('Generated site: ', site);
+
   const session = await stripe.checkout.sessions.create({
     line_items: [
       {
@@ -65,7 +69,7 @@ exports.checkout = functions.runWith(
       },
     ],
     mode: 'payment',
-    success_url: `${process.env.ITTY_BITTY_BASE_URL}/#${req.body.siteTitle || ''}/?${token}`,
+    success_url: site,
     cancel_url: `${process.env.ITTY_BITTY_BASE_URL}/#Payment_Incomplete/?${getPaymentIncompleteToken()}`,
   });
 

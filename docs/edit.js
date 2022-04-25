@@ -8,6 +8,9 @@ var DATA_PREFIX_8 = "data:text/html;charset=utf-8;base64,";
 var DATA_PREFIX_BXZE = "data:text/html;charset=utf-8;bxze64,";
 var DATA_PREFIX_GZIP = "data:text/html;charset=utf-8;gzip64,";
 
+const HOST_CHECKOUT_URL = 'https://us-central1-itty-bitty-host.cloudfunctions.net/checkout';
+// const HOST_CHECKOUT_URL = 'http://localhost:5001/itty-bitty-host/us-central1/checkout';
+
 var b = document.documentElement.setAttribute(
   "data-useragent",
   navigator.userAgent
@@ -306,7 +309,8 @@ function tweetLink() {
   return false;
 }
 
-window.addEventListener("load", () => {
+window.addEventListener('load', () => {
+  document.getElementById('hostForm').action = HOST_CHECKOUT_URL;
   document.getElementById('hostForm').addEventListener('submit', () => {
     let fragment = window.location.hash.substring(1);
 

@@ -1,9 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SK);
 const functions = require('firebase-functions');
 const Thirds = require('./thirds.min.node.js');
-
-const ITTY_BITTY_BASE_URL = process.env.ITTY_BITTY_BASE_URL;
-const VERIFICATION_SECRET = process.env.VERIFICATION_SECRET;
 
 let _paymentIncompleteToken;
 const getPaymentIncompleteToken = () => {
@@ -18,14 +14,18 @@ const getPaymentIncompleteToken = () => {
         title: "Payment Incomplete"
       },
       'EdDSA',
-      {key: VERIFICATION_SECRET}
+      {key: process.env.VERIFICATION_SECRET}
     );
   }
 
   return _paymentIncompleteToken;
 }
 
-exports.checkout = functions.https.onRequest(async (req, res) => {
+exports.checkout = functions.runWith(
+  { secrets: ['STRIPE_SK', 'VERIFICATION_SECRET'] }
+).https.onRequest(async (req, res) => {
+  const stripe = require('stripe')(process.env.STRIPE_SK);
+
   if (!req.body.siteDataUrl) {
     res.status(400).send("No site provided");
     return;
@@ -46,7 +46,7 @@ exports.checkout = functions.https.onRequest(async (req, res) => {
       ...(req.body.siteTitle ? {title: req.body.siteTitle} : {})
     },
     'EdDSA',
-    {key: VERIFICATION_SECRET}
+    {key: process.env.VERIFICATION_SECRET}
   );
 
   const session = await stripe.checkout.sessions.create({
@@ -63,8 +63,8 @@ exports.checkout = functions.https.onRequest(async (req, res) => {
       },
     ],
     mode: 'payment',
-    success_url: `${ITTY_BITTY_BASE_URL}/#${req.body.siteTitle || ''}/?${token}`,
-    cancel_url: `${ITTY_BITTY_BASE_URL}/#Payment_Incomplete/?${getPaymentIncompleteToken()}`,
+    success_url: `${process.env.ITTY_BITTY_BASE_URL}/#${req.body.siteTitle || ''}/?${token}`,
+    cancel_url: `${process.env.ITTY_BITTY_BASE_URL}/#Payment_Incomplete/?${getPaymentIncompleteToken()}`,
   });
 
   res.redirect(303, session.url);
